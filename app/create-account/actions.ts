@@ -8,6 +8,10 @@ const checkUsernmae = (username:string)=>
 const checkPasswords = ({password, confirm_password} : {password:string, confirm_password:string})=> 
   password === confirm_password
 
+const passwordRegex = new RegExp(
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*?[#?!@$%^&*-]).+$/
+)
+
 const formSchema = z
   .object({
     username: z
@@ -17,11 +21,14 @@ const formSchema = z
         
       })
       .min(3,"Way too short!!!")
-      .max(10,"That is too longggg!")
+      .trim()
+      .toLowerCase()
+      .transform((username)=>`${username}`)
+      // .max(10,"That is too longggg!")
       .refine(checkUsernmae,"No potatoes allowed"),
-    email: z.string().email(),
-    password: z.string().min(10),
-    confirm_password: z.string().min(10)
+    email: z.string().email().toLowerCase(),
+    password: z.string().min(10).regex(passwordRegex,"Passwords must contain at least one UPPERCASE, lowercase, number and special characters #?!@$%^&*-"),
+    confirm_password: z.string().min(4)
 })
 .refine(checkPasswords, {
   message:"Both passwords should be the same!",
@@ -37,5 +44,7 @@ export async function createAccount(prevState: any , formData:FormData){
   const result = formSchema.safeParse(data)
   if (!result.success){
     return result.error.flatten()
+  } else{
+    console.log(result.data)
   }
 }
